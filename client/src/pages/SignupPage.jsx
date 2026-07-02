@@ -26,7 +26,7 @@ const SignupPage = () => {
         <h2 className="text-2xl font-semibold">Signup</h2>
         {error && <p className="text-red-600 text-sm">{error}</p>}
         <input className="w-full border rounded p-2" placeholder="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-        <input className="w-full border rounded p-2" placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+        <input className="w-full border rounded p-2" placeholder="Email (someone@muj.manipal.edu)" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
         <input className="w-full border rounded p-2" type="password" placeholder="Password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
         <select className="w-full border rounded p-2" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
           {roles.map((role) => <option key={role} value={role}>{role}</option>)}
