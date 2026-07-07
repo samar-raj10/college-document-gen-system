@@ -3,6 +3,10 @@ import Layout from '../components/Layout';
 import api from '../services/api';
 
 const documentTypes = ['Bonafide', 'LOR', 'NOC', 'No Dues', 'Fee Structure'];
+const studentLinks = [
+  { to: '/dashboard', label: 'Student Dashboard' },
+  { to: '/student/document-vault', label: 'Document Vault' }
+];
 
 const StudentDashboard = () => {
   const [form, setForm] = useState({ documentType: 'Bonafide', details: '' });
@@ -11,7 +15,7 @@ const StudentDashboard = () => {
 
   const fetchRequests = async () => {
     const { data } = await api.get('/requests/my');
-    setRequests(data);
+    setRequests(data.filter((request) => request.status !== 'Approved'));
   };
 
   useEffect(() => {
@@ -30,19 +34,9 @@ const StudentDashboard = () => {
     }
   };
 
-  const downloadPdf = async (id) => {
-    const response = await api.get(`/requests/${id}/pdf`, { responseType: 'blob' });
-    const url = window.URL.createObjectURL(new Blob([response.data]));
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `document-${id}.pdf`);
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-  };
 
   return (
-    <Layout links={[{ to: '/dashboard', label: 'Student Dashboard' }]}>
+    <Layout links={studentLinks}>
       <h2 className="text-2xl font-semibold mb-4">Student Dashboard</h2>
 
       <form onSubmit={submit} className="bg-white p-4 rounded shadow mb-6 space-y-3">
@@ -56,7 +50,7 @@ const StudentDashboard = () => {
       </form>
 
       <div className="bg-white p-4 rounded shadow">
-        <h3 className="text-lg font-semibold mb-4">My Requests</h3>
+        <h3 className="text-lg font-semibold mb-4">Active Requests</h3>
         <div className="space-y-3">
           {requests.map((request) => (
             <div key={request._id} className="border rounded p-3 flex justify-between items-center">
@@ -65,14 +59,9 @@ const StudentDashboard = () => {
                 <p className="text-sm text-gray-600">Status: {request.status}</p>
                 {request.comments && <p className="text-sm text-gray-600">Comment: {request.comments}</p>}
               </div>
-              {request.status === 'Approved' && (
-                <button onClick={() => downloadPdf(request._id)} className="bg-brandOrange text-white px-3 py-1 rounded">
-                  Download PDF
-                </button>
-              )}
             </div>
           ))}
-          {!requests.length && <p className="text-gray-500">No requests submitted yet.</p>}
+          {!requests.length && <p className="text-gray-500">No active requests. Approved documents are available in your Document Vault.</p>}
         </div>
       </div>
     </Layout>

@@ -4,13 +4,16 @@ import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import StudentDashboard from './pages/StudentDashboard';
+import DocumentVaultPage from './pages/DocumentVaultPage';
 import AuthorityDashboard from './pages/AuthorityDashboard';
+import AdminDashboard from './pages/AdminDashboard';
 import UnauthorizedPage from './pages/UnauthorizedPage';
 
 const DashboardResolver = () => {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" replace />;
   if (user.role === 'student') return <StudentDashboard />;
+  if (user.role === 'admin') return <AdminDashboard />;
   return <AuthorityDashboard />;
 };
 
@@ -24,6 +27,14 @@ const App = () => (
       element={
         <ProtectedRoute roles={['student', 'hod', 'registrar', 'finance', 'admin']}>
           <DashboardResolver />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/student/document-vault"
+      element={
+        <ProtectedRoute roles={['student']}>
+          <DocumentVaultPage />
         </ProtectedRoute>
       }
     />

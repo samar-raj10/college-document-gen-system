@@ -2,10 +2,9 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-const roles = ['student', 'hod', 'registrar', 'finance', 'admin'];
 
 const SignupPage = () => {
-  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'student', department: '' });
+  const [form, setForm] = useState({ name: '', email: '', password: '', department: '' });
   const [error, setError] = useState('');
   const { signup } = useAuth();
   const navigate = useNavigate();
@@ -28,9 +27,7 @@ const SignupPage = () => {
         <input className="w-full border rounded p-2" placeholder="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
         <input className="w-full border rounded p-2" placeholder="Email (someone@muj.manipal.edu)" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
         <input className="w-full border rounded p-2" type="password" placeholder="Password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
-        <select className="w-full border rounded p-2" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
-          {roles.map((role) => <option key={role} value={role}>{role}</option>)}
-        </select>
+        <p className="text-sm text-gray-600">Public registrations are created as Student accounts.</p>
         <input className="w-full border rounded p-2" placeholder="Department (optional)" value={form.department} onChange={(e) => setForm({ ...form, department: e.target.value })} />
         <button className="w-full bg-brandOrange text-white p-2 rounded">Signup</button>
         <p className="text-sm">Already have account? <Link to="/login" className="text-brandOrange">Login</Link></p>

@@ -33,9 +33,26 @@ const getMyRequests = async (req, res) => {
   }
 };
 
+
+const getApprovedDocuments = async (req, res) => {
+  try {
+    const documents = await DocumentRequest.find({ student: req.user._id, status: 'Approved' })
+      .populate('reviewedBy', 'name')
+      .sort({ reviewedAt: -1, updatedAt: -1 });
+    return res.json(documents);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
 const getAssignedRequests = async (req, res) => {
   try {
-    const requests = await DocumentRequest.find({ assignedToRole: req.user.role })
+    if (req.user.role === 'student') {
+      return res.status(403).json({ message: 'Forbidden: insufficient role' });
+    }
+
+    const filter = req.user.role === 'admin' ? {} : { assignedToRole: req.user.role };
+    const requests = await DocumentRequest.find(filter)
       .populate('student', 'name email department')
       .sort({ createdAt: -1 });
     return res.json(requests);
@@ -47,6 +64,10 @@ const getAssignedRequests = async (req, res) => {
 const updateRequestStatus = async (req, res) => {
   try {
     const { status, comments } = req.body;
+    if (req.user.role === 'student') {
+      return res.status(403).json({ message: 'Forbidden: insufficient role' });
+    }
+
     if (!['Approved', 'Rejected'].includes(status)) {
       return res.status(400).json({ message: 'Invalid status' });
     }
@@ -56,7 +77,7 @@ const updateRequestStatus = async (req, res) => {
       return res.status(404).json({ message: 'Request not found' });
     }
 
-    if (request.assignedToRole !== req.user.role) {
+    if (req.user.role !== 'admin' && request.assignedToRole !== req.user.role) {
       return res.status(403).json({ message: 'Not authorized to review this request' });
     }
 
@@ -111,6 +132,7 @@ const downloadApprovedPdf = async (req, res) => {
 module.exports = {
   createRequest,
   getMyRequests,
+  getApprovedDocuments,
   getAssignedRequests,
   updateRequestStatus,
   downloadApprovedPdf
