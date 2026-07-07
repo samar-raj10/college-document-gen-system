@@ -21,6 +21,8 @@ server/   # Express backend
 ## Features
 
 - JWT signup/login with role-based access
+- Public signup always creates Student accounts
+- Admin-only privileged account creation and role management
 - Roles: Student, HOD, Registrar, Finance, Admin
 - Student dashboard with sidebar, request form, status tracking, PDF download
 - Authority dashboards with sidebar, assigned request list, approve/reject and comments
@@ -64,6 +66,11 @@ VITE_API_URL=http://localhost:5000/api
 - `POST /api/auth/login`
 - `GET /api/auth/me`
 
+### Admin
+- `GET /api/admin/users` (admin)
+- `POST /api/admin/users` (admin creates HOD/Registrar/Finance/Admin)
+- `PATCH /api/admin/users/:id/role` (admin)
+
 ### Requests
 - `POST /api/requests` (student)
 - `GET /api/requests/my` (student)
@@ -82,6 +89,8 @@ VITE_API_URL=http://localhost:5000/api
    - `MONGO_URI`
    - `JWT_SECRET`
    - `CLIENT_URL` (your frontend URL)
+   - `ADMIN_EMAIL` and `ADMIN_PASSWORD` for the initial admin seed when no admin exists
+   - `ADMIN_NAME` and `ADMIN_DEPARTMENT` (optional)
    - `PORT` (Render sets this automatically)
 
 ### Frontend (Static Site)
@@ -95,6 +104,7 @@ VITE_API_URL=http://localhost:5000/api
 ## Production Notes
 
 - Use strong JWT secret in production.
-- Restrict signup role assignment in production (recommended via admin-only user creation).
+- Public signup is restricted to Student accounts; use Admin user management for privileged roles.
+- Set `ADMIN_EMAIL` and a strong `ADMIN_PASSWORD` during first deployment to seed or promote the initial admin account, then rotate/remove the seed password from the runtime environment after confirming access.
 - Add email notification service and audit logs for enterprise-grade usage.
 - Add request input validation and rate limiting for hardened deployment.

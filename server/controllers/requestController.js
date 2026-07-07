@@ -35,7 +35,8 @@ const getMyRequests = async (req, res) => {
 
 const getAssignedRequests = async (req, res) => {
   try {
-    const requests = await DocumentRequest.find({ assignedToRole: req.user.role })
+    const filter = req.user.role === 'admin' ? {} : { assignedToRole: req.user.role };
+    const requests = await DocumentRequest.find(filter)
       .populate('student', 'name email department')
       .sort({ createdAt: -1 });
     return res.json(requests);
@@ -56,7 +57,7 @@ const updateRequestStatus = async (req, res) => {
       return res.status(404).json({ message: 'Request not found' });
     }
 
-    if (request.assignedToRole !== req.user.role) {
+    if (req.user.role !== 'admin' && request.assignedToRole !== req.user.role) {
       return res.status(403).json({ message: 'Not authorized to review this request' });
     }
 

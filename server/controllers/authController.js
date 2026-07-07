@@ -6,7 +6,7 @@ const signToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: 
 
 const signup = async (req, res) => {
   try {
-    const { name, email, password, role, department } = req.body;
+    const { name, email, password, department } = req.body;
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -18,7 +18,7 @@ const signup = async (req, res) => {
       name,
       email,
       password: hashedPassword,
-      role: role || 'student',
+      role: 'student',
       department
     });
 
