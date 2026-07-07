@@ -25,7 +25,8 @@ server/   # Express backend
 - Admin-only user creation and dynamic role management
 - Seeded system roles: Student, HOD, Registrar, Finance, Admin
 - Admins can create additional custom roles such as Dean, Librarian, or Placement Officer
-- Student dashboard with sidebar, request form, status tracking, PDF download
+- Student dashboard with sidebar, request form, and active request status tracking
+- Student Document Vault for approved/generated documents and PDF downloads
 - Authority dashboards with sidebar, assigned request list, approve/reject and comments
 - Routing logic:
   - Bonafide → HOD
@@ -79,6 +80,7 @@ VITE_API_URL=http://localhost:5000/api
 ### Requests
 - `POST /api/requests` (student)
 - `GET /api/requests/my` (student)
+- `GET /api/requests/vault` (student approved documents)
 - `GET /api/requests/assigned` (authority)
 - `PATCH /api/requests/:id/status` (authority)
 - `GET /api/requests/:id/pdf` (approved only)

@@ -33,6 +33,18 @@ const getMyRequests = async (req, res) => {
   }
 };
 
+
+const getApprovedDocuments = async (req, res) => {
+  try {
+    const documents = await DocumentRequest.find({ student: req.user._id, status: 'Approved' })
+      .populate('reviewedBy', 'name')
+      .sort({ reviewedAt: -1, updatedAt: -1 });
+    return res.json(documents);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
 const getAssignedRequests = async (req, res) => {
   try {
     if (req.user.role === 'student') {
@@ -120,6 +132,7 @@ const downloadApprovedPdf = async (req, res) => {
 module.exports = {
   createRequest,
   getMyRequests,
+  getApprovedDocuments,
   getAssignedRequests,
   updateRequestStatus,
   downloadApprovedPdf
