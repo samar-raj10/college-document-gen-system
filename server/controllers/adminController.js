@@ -1,8 +1,8 @@
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
-
-const MANAGEABLE_ROLES = ['student', 'hod', 'registrar', 'finance', 'admin'];
-const PRIVILEGED_ROLES = ['hod', 'registrar', 'finance', 'admin'];
+const Role = require('../models/Role');
+const DocumentRequest = require('../models/DocumentRequest');
+const { ensureRole, formatRole, normalizeRoleKey, renameRoleAndAssignments, roleExists } = require('../utils/roleService');
 
 const formatUser = (user) => ({
   id: user._id,
@@ -23,12 +23,13 @@ const listUsers = async (req, res) => {
   }
 };
 
-const createPrivilegedUser = async (req, res) => {
+const createUser = async (req, res) => {
   try {
     const { name, email, password, role, department } = req.body;
+    const roleKey = normalizeRoleKey(role || '');
 
-    if (!PRIVILEGED_ROLES.includes(role)) {
-      return res.status(400).json({ message: 'Admin-created users must have a privileged role' });
+    if (!(await roleExists(roleKey))) {
+      return res.status(400).json({ message: 'Role does not exist. Create the role before assigning it.' });
     }
 
     const existingUser = await User.findOne({ email });
@@ -41,7 +42,7 @@ const createPrivilegedUser = async (req, res) => {
       name,
       email,
       password: hashedPassword,
-      role,
+      role: roleKey,
       department
     });
 
@@ -53,10 +54,10 @@ const createPrivilegedUser = async (req, res) => {
 
 const updateUserRole = async (req, res) => {
   try {
-    const { role } = req.body;
+    const roleKey = normalizeRoleKey(req.body.role || '');
 
-    if (!MANAGEABLE_ROLES.includes(role)) {
-      return res.status(400).json({ message: 'Invalid role' });
+    if (!(await roleExists(roleKey))) {
+      return res.status(400).json({ message: 'Role does not exist' });
     }
 
     const user = await User.findById(req.params.id);
@@ -64,7 +65,7 @@ const updateUserRole = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    user.role = role;
+    user.role = roleKey;
     await user.save();
 
     return res.json({ user: formatUser(user) });
@@ -73,4 +74,69 @@ const updateUserRole = async (req, res) => {
   }
 };
 
-module.exports = { listUsers, createPrivilegedUser, updateUserRole };
+const listRoles = async (req, res) => {
+  try {
+    const roles = await Role.find().sort({ name: 1 });
+    return res.json(roles.map(formatRole));
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+const createRole = async (req, res) => {
+  try {
+    const { name } = req.body;
+    const role = await ensureRole(name || '');
+    return res.status(201).json({ role: formatRole(role) });
+  } catch (error) {
+    return res.status(400).json({ message: error.message });
+  }
+};
+
+const renameRole = async (req, res) => {
+  try {
+    const role = await Role.findById(req.params.id);
+    if (!role) {
+      return res.status(404).json({ message: 'Role not found' });
+    }
+
+    if (role.isSystem) {
+      return res.status(400).json({ message: 'System roles cannot be renamed' });
+    }
+
+    const updatedRole = await renameRoleAndAssignments(role, req.body.name || '');
+    return res.json({ role: formatRole(updatedRole) });
+  } catch (error) {
+    return res.status(400).json({ message: error.message });
+  }
+};
+
+const deleteRole = async (req, res) => {
+  try {
+    const role = await Role.findById(req.params.id);
+    if (!role) {
+      return res.status(404).json({ message: 'Role not found' });
+    }
+
+    if (role.isSystem) {
+      return res.status(400).json({ message: 'System roles cannot be deleted' });
+    }
+
+    const assignedUsers = await User.countDocuments({ role: role.key });
+    if (assignedUsers > 0) {
+      return res.status(400).json({ message: 'Role is assigned to users and cannot be deleted' });
+    }
+
+    const assignedRequests = await DocumentRequest.countDocuments({ assignedToRole: role.key });
+    if (assignedRequests > 0) {
+      return res.status(400).json({ message: 'Role is assigned to document requests and cannot be deleted' });
+    }
+
+    await role.deleteOne();
+    return res.json({ message: 'Role deleted' });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports = { listUsers, createUser, updateUserRole, listRoles, createRole, renameRole, deleteRole };

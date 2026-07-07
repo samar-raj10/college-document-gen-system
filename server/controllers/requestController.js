@@ -35,6 +35,10 @@ const getMyRequests = async (req, res) => {
 
 const getAssignedRequests = async (req, res) => {
   try {
+    if (req.user.role === 'student') {
+      return res.status(403).json({ message: 'Forbidden: insufficient role' });
+    }
+
     const filter = req.user.role === 'admin' ? {} : { assignedToRole: req.user.role };
     const requests = await DocumentRequest.find(filter)
       .populate('student', 'name email department')
@@ -48,6 +52,10 @@ const getAssignedRequests = async (req, res) => {
 const updateRequestStatus = async (req, res) => {
   try {
     const { status, comments } = req.body;
+    if (req.user.role === 'student') {
+      return res.status(403).json({ message: 'Forbidden: insufficient role' });
+    }
+
     if (!['Approved', 'Rejected'].includes(status)) {
       return res.status(400).json({ message: 'Invalid status' });
     }

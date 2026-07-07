@@ -1,17 +1,22 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Layout from '../components/Layout';
 import api from '../services/api';
 
-const roles = ['student', 'hod', 'registrar', 'finance', 'admin'];
-const privilegedRoles = ['hod', 'registrar', 'finance', 'admin'];
+const normalizeRoleKey = (name) => name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
 const AdminDashboard = () => {
   const [requests, setRequests] = useState([]);
   const [users, setUsers] = useState([]);
+  const [roles, setRoles] = useState([]);
   const [comments, setComments] = useState({});
   const [createForm, setCreateForm] = useState({ name: '', email: '', password: '', role: 'hod', department: '' });
+  const [newRoleName, setNewRoleName] = useState('');
+  const [renameValues, setRenameValues] = useState({});
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+
+  const roleOptions = useMemo(() => roles.map((role) => ({ label: role.name, value: role.key })), [roles]);
+  const createFormRoleExists = roles.some((role) => role.key === normalizeRoleKey(createForm.role));
 
   const fetchRequests = async () => {
     const { data } = await api.get('/requests/assigned');
@@ -23,42 +28,115 @@ const AdminDashboard = () => {
     setUsers(data);
   };
 
+  const fetchRoles = async () => {
+    const { data } = await api.get('/admin/roles');
+    setRoles(data);
+    setCreateForm((current) => ({ ...current, role: current.role || data[0]?.key || '' }));
+  };
+
   const refresh = async () => {
-    await Promise.all([fetchRequests(), fetchUsers()]);
+    await Promise.all([fetchRequests(), fetchUsers(), fetchRoles()]);
   };
 
   useEffect(() => {
     refresh();
   }, []);
 
+  const setSuccess = (text) => {
+    setError('');
+    setMessage(text);
+  };
+
+  const setFailure = (text) => {
+    setMessage('');
+    setError(text);
+  };
+
   const updateStatus = async (id, status) => {
     await api.patch(`/requests/${id}/status`, { status, comments: comments[id] || '' });
     fetchRequests();
+  };
+
+  const createRole = async (name) => {
+    const roleName = name.trim();
+    if (!roleName) {
+      setFailure('Role name is required');
+      return null;
+    }
+
+    try {
+      const { data } = await api.post('/admin/roles', { name: roleName });
+      await fetchRoles();
+      setSuccess(`Role "${data.role.name}" is available.`);
+      return data.role;
+    } catch (err) {
+      setFailure(err.response?.data?.message || 'Failed to create role');
+      return null;
+    }
+  };
+
+  const createRoleFromPanel = async (e) => {
+    e.preventDefault();
+    const role = await createRole(newRoleName);
+    if (role) {
+      setNewRoleName('');
+    }
+  };
+
+  const ensureCreateFormRole = async () => {
+    const roleKey = normalizeRoleKey(createForm.role);
+    const existingRole = roles.find((role) => role.key === roleKey);
+    if (existingRole) return existingRole;
+
+    return createRole(createForm.role);
   };
 
   const createUser = async (e) => {
     e.preventDefault();
     setError('');
     setMessage('');
+
+    const role = await ensureCreateFormRole();
+    if (!role) return;
+
     try {
-      await api.post('/admin/users', createForm);
-      setCreateForm({ name: '', email: '', password: '', role: 'hod', department: '' });
-      setMessage('Privileged account created successfully.');
+      await api.post('/admin/users', { ...createForm, role: role.key });
+      setCreateForm({ name: '', email: '', password: '', role: role.key, department: '' });
+      setSuccess('User account created successfully.');
       fetchUsers();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create account');
+      setFailure(err.response?.data?.message || 'Failed to create account');
     }
   };
 
   const changeRole = async (id, role) => {
-    setError('');
-    setMessage('');
     try {
       await api.patch(`/admin/users/${id}/role`, { role });
-      setMessage('User role updated successfully.');
+      setSuccess('User role updated successfully.');
       fetchUsers();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update role');
+      setFailure(err.response?.data?.message || 'Failed to update role');
+    }
+  };
+
+  const renameRole = async (role) => {
+    try {
+      await api.patch(`/admin/roles/${role.id}`, { name: renameValues[role.id] || role.name });
+      setSuccess('Role renamed successfully.');
+      fetchRoles();
+      fetchUsers();
+    } catch (err) {
+      setFailure(err.response?.data?.message || 'Failed to rename role');
+    }
+  };
+
+  const deleteRole = async (role) => {
+    try {
+      await api.delete(`/admin/roles/${role.id}`);
+      setSuccess('Role deleted successfully.');
+      fetchRoles();
+    } catch (err) {
+      setFailure(err.response?.data?.message || 'Failed to delete role');
     }
   };
 
@@ -68,18 +146,44 @@ const AdminDashboard = () => {
       {message && <p className="bg-green-100 text-green-700 border border-green-200 p-3 rounded mb-4">{message}</p>}
       {error && <p className="bg-red-100 text-red-700 border border-red-200 p-3 rounded mb-4">{error}</p>}
 
+      <datalist id="role-options">
+        {roleOptions.map((role) => <option key={role.value} value={role.value}>{role.label}</option>)}
+      </datalist>
+
       <section className="bg-white p-4 rounded shadow mb-6">
-        <h3 className="text-lg font-semibold mb-3">Create Privileged Account</h3>
+        <h3 className="text-lg font-semibold mb-3">Create User Account</h3>
         <form onSubmit={createUser} className="grid md:grid-cols-2 gap-3">
           <input className="border rounded p-2" placeholder="Name" value={createForm.name} onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })} required />
           <input className="border rounded p-2" placeholder="Email" value={createForm.email} onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })} required />
           <input className="border rounded p-2" type="password" placeholder="Temporary password" value={createForm.password} onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })} required />
-          <select className="border rounded p-2" value={createForm.role} onChange={(e) => setCreateForm({ ...createForm, role: e.target.value })}>
-            {privilegedRoles.map((role) => <option key={role} value={role}>{role}</option>)}
-          </select>
+          <div>
+            <input className="border rounded p-2 w-full" list="role-options" placeholder="Search or enter a role" value={createForm.role} onChange={(e) => setCreateForm({ ...createForm, role: e.target.value })} required />
+            {!createFormRoleExists && createForm.role && <p className="text-xs text-brandOrange mt-1">This role will be created before assigning it.</p>}
+          </div>
           <input className="border rounded p-2 md:col-span-2" placeholder="Department (optional)" value={createForm.department} onChange={(e) => setCreateForm({ ...createForm, department: e.target.value })} />
           <button className="bg-brandOrange text-white px-4 py-2 rounded md:col-span-2">Create Account</button>
         </form>
+      </section>
+
+      <section className="bg-white p-4 rounded shadow mb-6">
+        <h3 className="text-lg font-semibold mb-3">Roles</h3>
+        <form onSubmit={createRoleFromPanel} className="flex gap-2 mb-4">
+          <input className="border rounded p-2 flex-1" placeholder="New role name, e.g. Hostel Warden" value={newRoleName} onChange={(e) => setNewRoleName(e.target.value)} />
+          <button className="bg-brandOrange text-white px-4 py-2 rounded">Create Role</button>
+        </form>
+        <div className="space-y-2">
+          {roles.map((role) => (
+            <div key={role.id} className="border rounded p-3 flex flex-col md:flex-row md:items-center gap-2">
+              <div className="flex-1">
+                <p className="font-medium">{role.name}</p>
+                <p className="text-xs text-gray-500">Key: {role.key}{role.isSystem ? ' · protected system role' : ''}</p>
+              </div>
+              <input className="border rounded p-2 md:w-64" disabled={role.isSystem} value={renameValues[role.id] ?? role.name} onChange={(e) => setRenameValues({ ...renameValues, [role.id]: e.target.value })} />
+              <button className="bg-gray-700 text-white px-3 py-2 rounded disabled:opacity-50" disabled={role.isSystem} onClick={() => renameRole(role)}>Rename</button>
+              <button className="bg-red-600 text-white px-3 py-2 rounded disabled:opacity-50" disabled={role.isSystem} onClick={() => deleteRole(role)}>Delete</button>
+            </div>
+          ))}
+        </div>
       </section>
 
       <section className="bg-white p-4 rounded shadow mb-6">
@@ -102,7 +206,7 @@ const AdminDashboard = () => {
                   <td className="py-2 pr-3">{user.department || 'N/A'}</td>
                   <td className="py-2 pr-3">
                     <select className="border rounded p-1" value={user.role} onChange={(e) => changeRole(user.id, e.target.value)}>
-                      {roles.map((role) => <option key={role} value={role}>{role}</option>)}
+                      {roles.map((role) => <option key={role.key} value={role.key}>{role.name}</option>)}
                     </select>
                   </td>
                 </tr>

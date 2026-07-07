@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
+const { ensureRole } = require('./roleService');
 
 const seedInitialAdmin = async () => {
   const { ADMIN_NAME, ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_DEPARTMENT } = process.env;
@@ -7,6 +8,8 @@ const seedInitialAdmin = async () => {
   if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
     return;
   }
+
+  await ensureRole('Admin', { key: 'admin', isSystem: true });
 
   const existingAdmin = await User.findOne({ role: 'admin' });
   if (existingAdmin) {

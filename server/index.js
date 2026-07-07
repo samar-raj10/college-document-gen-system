@@ -6,9 +6,13 @@ const authRoutes = require('./routes/authRoutes');
 const requestRoutes = require('./routes/requestRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const { seedInitialAdmin } = require('./utils/seedAdmin');
+const { seedSystemRoles } = require('./utils/roleService');
 
 dotenv.config();
-connectDB().then(seedInitialAdmin);
+connectDB().then(async () => {
+  await seedSystemRoles();
+  await seedInitialAdmin();
+});
 
 const app = express();
 app.use(cors({ origin: process.env.CLIENT_URL || '*' }));
