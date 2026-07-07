@@ -21,7 +21,10 @@ server/   # Express backend
 ## Features
 
 - JWT signup/login with role-based access
-- Roles: Student, HOD, Registrar, Finance, Admin
+- Public signup always creates Student accounts
+- Admin-only user creation and dynamic role management
+- Seeded system roles: Student, HOD, Registrar, Finance, Admin
+- Admins can create additional custom roles such as Dean, Librarian, or Placement Officer
 - Student dashboard with sidebar, request form, status tracking, PDF download
 - Authority dashboards with sidebar, assigned request list, approve/reject and comments
 - Routing logic:
@@ -64,12 +67,25 @@ VITE_API_URL=http://localhost:5000/api
 - `POST /api/auth/login`
 - `GET /api/auth/me`
 
+### Admin
+- `GET /api/admin/roles` (admin)
+- `POST /api/admin/roles` (admin creates a custom role)
+- `PATCH /api/admin/roles/:id` (admin renames non-system roles)
+- `DELETE /api/admin/roles/:id` (admin deletes unused non-system roles)
+- `GET /api/admin/users` (admin)
+- `POST /api/admin/users` (admin creates a user with any existing role)
+- `PATCH /api/admin/users/:id/role` (admin assigns any existing role)
+
 ### Requests
 - `POST /api/requests` (student)
 - `GET /api/requests/my` (student)
 - `GET /api/requests/assigned` (authority)
 - `PATCH /api/requests/:id/status` (authority)
 - `GET /api/requests/:id/pdf` (approved only)
+
+## Role Management
+
+Roles are stored in MongoDB in a dedicated `roles` collection with a human-readable `name`, normalized unique `key`, and `isSystem` flag. On server startup, the system seeds Student, HOD, Registrar, Finance, and Admin roles so existing user role strings continue to work. System roles are protected from rename/delete in the Admin Dashboard, while custom roles can be created, renamed, deleted when unused, and assigned to users.
 
 ## Render Deployment
 
@@ -82,6 +98,8 @@ VITE_API_URL=http://localhost:5000/api
    - `MONGO_URI`
    - `JWT_SECRET`
    - `CLIENT_URL` (your frontend URL)
+   - `ADMIN_EMAIL` and `ADMIN_PASSWORD` for the initial admin seed when no admin exists
+   - `ADMIN_NAME` and `ADMIN_DEPARTMENT` (optional)
    - `PORT` (Render sets this automatically)
 
 ### Frontend (Static Site)
@@ -95,6 +113,7 @@ VITE_API_URL=http://localhost:5000/api
 ## Production Notes
 
 - Use strong JWT secret in production.
-- Restrict signup role assignment in production (recommended via admin-only user creation).
+- Public signup is restricted to Student accounts; use Admin user management for all role creation and assignment.
+- Set `ADMIN_EMAIL` and a strong `ADMIN_PASSWORD` during first deployment to seed or promote the initial admin account, then rotate/remove the seed password from the runtime environment after confirming access.
 - Add email notification service and audit logs for enterprise-grade usage.
 - Add request input validation and rate limiting for hardened deployment.
