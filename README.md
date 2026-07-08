@@ -23,18 +23,19 @@ server/   # Express backend
 - JWT signup/login with role-based access
 - Public signup always creates Student accounts
 - Admin-only user creation and dynamic role management
-- Seeded system roles: Student, HOD, Registrar, Finance, Admin
+- Seeded system roles: Student, HOD, Registrar, Finance, Admin, Faculty, Chief Librarian, Chief Warden
 - Admins can create additional custom roles such as Dean, Librarian, or Placement Officer
 - Student dashboard with sidebar, request form, and active request status tracking
 - Student Document Vault for approved/generated documents and PDF downloads
 - Authority dashboards with sidebar, assigned request list, approve/reject and comments
+- Sequential approval workflows with per-request stage history
 - Routing logic:
-  - Bonafide → HOD
-  - LOR → HOD
-  - NOC → Registrar
-  - No Dues → Finance
-  - Fee Structure → Finance
-- Dynamic PDF generation for approved requests
+  - Bonafide → Registrar → Admin
+  - LOR → Faculty → HOD
+  - NOC → HOD
+  - No Dues → Chief Librarian → Chief Warden → Finance → Admin
+  - Fee Structure → Finance → Admin
+- Dynamic PDF generation for fully approved requests only
 
 ## Local Setup
 
@@ -64,11 +65,13 @@ VITE_API_URL=http://localhost:5000/api
 ## API Endpoints
 
 ### Auth
+
 - `POST /api/auth/signup`
 - `POST /api/auth/login`
 - `GET /api/auth/me`
 
 ### Admin
+
 - `GET /api/admin/roles` (admin)
 - `POST /api/admin/roles` (admin creates a custom role)
 - `PATCH /api/admin/roles/:id` (admin renames non-system roles)
@@ -78,6 +81,7 @@ VITE_API_URL=http://localhost:5000/api
 - `PATCH /api/admin/users/:id/role` (admin assigns any existing role)
 
 ### Requests
+
 - `POST /api/requests` (student)
 - `GET /api/requests/my` (student)
 - `GET /api/requests/vault` (student approved documents)
@@ -87,11 +91,23 @@ VITE_API_URL=http://localhost:5000/api
 
 ## Role Management
 
-Roles are stored in MongoDB in a dedicated `roles` collection with a human-readable `name`, normalized unique `key`, and `isSystem` flag. On server startup, the system seeds Student, HOD, Registrar, Finance, and Admin roles so existing user role strings continue to work. System roles are protected from rename/delete in the Admin Dashboard, while custom roles can be created, renamed, deleted when unused, and assigned to users.
+Roles are stored in MongoDB in a dedicated `roles` collection with a human-readable `name`, normalized unique `key`, and `isSystem` flag. On server startup, the system seeds the following roles:
+
+- Student
+- Faculty
+- HOD
+- Registrar
+- Chief Librarian
+- Chief Warden
+- Finance
+- Admin
+
+System roles are protected from rename/delete in the Admin Dashboard, while custom roles can be created, renamed, deleted when unused, and assigned to users.
 
 ## Render Deployment
 
 ### Backend (Web Service)
+
 1. Create a new Web Service from your GitHub repo.
 2. Root directory: `server`
 3. Build command: `npm install`
@@ -105,6 +121,7 @@ Roles are stored in MongoDB in a dedicated `roles` collection with a human-reada
    - `PORT` (Render sets this automatically)
 
 ### Frontend (Static Site)
+
 1. Create a new Static Site from the same repo.
 2. Root directory: `client`
 3. Build command: `npm install && npm run build`
