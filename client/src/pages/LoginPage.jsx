@@ -25,7 +25,7 @@ const LoginPage = () => {
         <div className="mb-8 rounded-[2rem] border border-orange-100 bg-white/90 p-8 shadow-soft backdrop-blur">
           <div className="mb-6 text-center">
             <span className="inline-flex items-center rounded-full bg-orange-100 px-4 py-2 text-sm font-semibold text-orange-700">
-              University ERP
+              Manipal University Jaipur
             </span>
             <h1 className="mt-6 text-3xl font-bold tracking-tight text-gray-900">
               Secure login
