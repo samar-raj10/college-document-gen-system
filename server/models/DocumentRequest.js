@@ -16,22 +16,25 @@ const documentRequestSchema = new mongoose.Schema(
     // current role this request is assigned to (role key string)
     assignedToRole: {
       type: String,
-      required: true,
+      default: null,
     },
     // workflow stages and history to support multi-level approval
-    workflow: [
-      {
-        role: { type: String, required: true },
-        status: {
-          type: String,
-          enum: ["Pending", "Approved", "Rejected"],
-          default: "Pending",
+    workflow: {
+      type: [
+        {
+          role: { type: String, required: true },
+          status: {
+            type: String,
+            enum: ["Pending", "Approved", "Rejected"],
+            default: "Pending",
+          },
+          reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+          reviewedAt: { type: Date },
+          comments: { type: String, default: "" },
         },
-        reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-        reviewedAt: { type: Date },
-        comments: { type: String, default: "" },
-      },
-    ],
+      ],
+      default: [],
+    },
     status: {
       type: String,
       enum: ["Pending", "Approved", "Rejected"],

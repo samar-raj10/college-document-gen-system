@@ -184,250 +184,347 @@ const AdminDashboard = () => {
 
   return (
     <Layout links={[{ to: "/dashboard", label: "Admin Dashboard" }]}>
-      <h2 className="text-2xl font-semibold mb-4">Admin Dashboard</h2>
-      {message && (
-        <p className="bg-green-100 text-green-700 border border-green-200 p-3 rounded mb-4">
-          {message}
-        </p>
-      )}
-      {error && (
-        <p className="bg-red-100 text-red-700 border border-red-200 p-3 rounded mb-4">
-          {error}
-        </p>
-      )}
+      <div className="space-y-6">
+        <section className="rounded-[2rem] border border-orange-100 bg-white p-6 shadow-soft">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-orange-700">
+                Admin console
+              </p>
+              <h1 className="mt-2 text-3xl font-bold text-gray-900">
+                Manage roles, users and approvals
+              </h1>
+            </div>
+            <div className="inline-flex items-center gap-2 rounded-full bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-700">
+              <span className="h-2.5 w-2.5 rounded-full bg-orange-700" />
+              Live system overview
+            </div>
+          </div>
 
-      <datalist id="role-options">
-        {roleOptions.map((role) => (
-          <option key={role.value} value={role.value}>
-            {role.label}
-          </option>
-        ))}
-      </datalist>
+          <div className="mt-8 grid gap-4 md:grid-cols-3">
+            <div className="rounded-3xl border border-orange-100 bg-orange-50 p-5">
+              <p className="text-sm text-gray-600">Total users</p>
+              <p className="mt-3 text-3xl font-bold text-gray-900">
+                {users.length}
+              </p>
+            </div>
+            <div className="rounded-3xl border border-orange-100 bg-orange-50 p-5">
+              <p className="text-sm text-gray-600">Active roles</p>
+              <p className="mt-3 text-3xl font-bold text-gray-900">
+                {roles.length}
+              </p>
+            </div>
+            <div className="rounded-3xl border border-orange-100 bg-orange-50 p-5">
+              <p className="text-sm text-gray-600">Open requests</p>
+              <p className="mt-3 text-3xl font-bold text-gray-900">
+                {requests.length}
+              </p>
+            </div>
+          </div>
+        </section>
 
-      <section className="bg-white p-4 rounded shadow mb-6">
-        <h3 className="text-lg font-semibold mb-3">Create User Account</h3>
-        <form onSubmit={createUser} className="grid md:grid-cols-2 gap-3">
-          <input
-            className="border rounded p-2"
-            placeholder="Name"
-            value={createForm.name}
-            onChange={(e) =>
-              setCreateForm({ ...createForm, name: e.target.value })
-            }
-            required
-          />
-          <input
-            className="border rounded p-2"
-            placeholder="Email"
-            value={createForm.email}
-            onChange={(e) =>
-              setCreateForm({ ...createForm, email: e.target.value })
-            }
-            required
-          />
-          <input
-            className="border rounded p-2"
-            type="password"
-            placeholder="Temporary password"
-            value={createForm.password}
-            onChange={(e) =>
-              setCreateForm({ ...createForm, password: e.target.value })
-            }
-            required
-          />
-          <div>
+        {(message || error) && (
+          <section className="rounded-3xl border border-orange-100 bg-white p-5 shadow-soft">
+            {message && (
+              <p className="mb-3 rounded-3xl border border-green-100 bg-green-50 px-4 py-3 text-sm text-green-700">
+                {message}
+              </p>
+            )}
+            {error && (
+              <p className="rounded-3xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {error}
+              </p>
+            )}
+          </section>
+        )}
+
+        <section className="rounded-[2rem] border border-orange-100 bg-white p-6 shadow-soft">
+          <div className="mb-5 flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900">
+                Create user account
+              </h2>
+              <p className="text-sm text-gray-500">
+                Add admins or authorities with custom roles.
+              </p>
+            </div>
+            <span className="rounded-3xl bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-700">
+              Role-driven access
+            </span>
+          </div>
+
+          <datalist id="role-options">
+            {roleOptions.map((role) => (
+              <option key={role.value} value={role.value}>
+                {role.label}
+              </option>
+            ))}
+          </datalist>
+
+          <form onSubmit={createUser} className="grid gap-4 md:grid-cols-2">
             <input
-              className="border rounded p-2 w-full"
-              list="role-options"
-              placeholder="Search or enter a role"
-              value={createForm.role}
+              className="rounded-3xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-gray-900 transition focus:border-orange-400 focus:bg-white"
+              placeholder="Name"
+              value={createForm.name}
               onChange={(e) =>
-                setCreateForm({ ...createForm, role: e.target.value })
+                setCreateForm({ ...createForm, name: e.target.value })
               }
               required
             />
-            {!createFormRoleExists && createForm.role && (
-              <p className="text-xs text-brandOrange mt-1">
-                This role will be created before assigning it.
-              </p>
-            )}
-          </div>
-          <input
-            className="border rounded p-2 md:col-span-2"
-            placeholder="Department (optional)"
-            value={createForm.department}
-            onChange={(e) =>
-              setCreateForm({ ...createForm, department: e.target.value })
-            }
-          />
-          <button className="bg-brandOrange text-white px-4 py-2 rounded md:col-span-2">
-            Create Account
-          </button>
-        </form>
-      </section>
-
-      <section className="bg-white p-4 rounded shadow mb-6">
-        <h3 className="text-lg font-semibold mb-3">Roles</h3>
-        <form onSubmit={createRoleFromPanel} className="flex gap-2 mb-4">
-          <input
-            className="border rounded p-2 flex-1"
-            placeholder="New role name, e.g. Hostel Warden"
-            value={newRoleName}
-            onChange={(e) => setNewRoleName(e.target.value)}
-          />
-          <button className="bg-brandOrange text-white px-4 py-2 rounded">
-            Create Role
-          </button>
-        </form>
-        <div className="space-y-2">
-          {roles.map((role) => (
-            <div
-              key={role.id}
-              className="border rounded p-3 flex flex-col md:flex-row md:items-center gap-2"
-            >
-              <div className="flex-1">
-                <p className="font-medium">{role.name}</p>
-                <p className="text-xs text-gray-500">
-                  Key: {role.key}
-                  {role.isSystem ? " · protected system role" : ""}
-                </p>
-              </div>
+            <input
+              className="rounded-3xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-gray-900 transition focus:border-orange-400 focus:bg-white"
+              placeholder="Email"
+              value={createForm.email}
+              onChange={(e) =>
+                setCreateForm({ ...createForm, email: e.target.value })
+              }
+              required
+            />
+            <input
+              className="rounded-3xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-gray-900 transition focus:border-orange-400 focus:bg-white"
+              type="password"
+              placeholder="Temporary password"
+              value={createForm.password}
+              onChange={(e) =>
+                setCreateForm({ ...createForm, password: e.target.value })
+              }
+              required
+            />
+            <div>
               <input
-                className="border rounded p-2 md:w-64"
-                disabled={role.isSystem}
-                value={renameValues[role.id] ?? role.name}
+                className="w-full rounded-3xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-gray-900 transition focus:border-orange-400 focus:bg-white"
+                list="role-options"
+                placeholder="Search or enter a role"
+                value={createForm.role}
                 onChange={(e) =>
-                  setRenameValues({
-                    ...renameValues,
-                    [role.id]: e.target.value,
-                  })
+                  setCreateForm({ ...createForm, role: e.target.value })
+                }
+                required
+              />
+              {!createFormRoleExists && createForm.role && (
+                <p className="mt-2 text-xs text-orange-600">
+                  This role will be created before assigning it.
+                </p>
+              )}
+            </div>
+            <div className="md:col-span-2">
+              <input
+                className="w-full rounded-3xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-gray-900 transition focus:border-orange-400 focus:bg-white"
+                placeholder="Department (optional)"
+                value={createForm.department}
+                onChange={(e) =>
+                  setCreateForm({ ...createForm, department: e.target.value })
                 }
               />
-              <button
-                className="bg-gray-700 text-white px-3 py-2 rounded disabled:opacity-50"
-                disabled={role.isSystem}
-                onClick={() => renameRole(role)}
-              >
-                Rename
-              </button>
-              <button
-                className="bg-red-600 text-white px-3 py-2 rounded disabled:opacity-50"
-                disabled={role.isSystem}
-                onClick={() => deleteRole(role)}
-              >
-                Delete
+            </div>
+            <button className="md:col-span-2 rounded-3xl bg-orange-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-orange-700">
+              Create Account
+            </button>
+          </form>
+        </section>
+
+        <section className="rounded-[2rem] border border-orange-100 bg-white p-6 shadow-soft">
+          <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h2 className="text-xl font-semibold text-gray-900">Roles</h2>
+            <div className="flex gap-2">
+              <input
+                className="rounded-3xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-gray-900 transition focus:border-orange-400 focus:bg-white"
+                placeholder="New role name, e.g. Hostel Warden"
+                value={newRoleName}
+                onChange={(e) => setNewRoleName(e.target.value)}
+              />
+              <button className="rounded-3xl bg-orange-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-orange-700">
+                Create Role
               </button>
             </div>
-          ))}
-        </div>
-      </section>
+          </div>
 
-      <section className="bg-white p-4 rounded shadow mb-6">
-        <h3 className="text-lg font-semibold mb-3">Manage Users</h3>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left border-b">
-                <th className="py-2 pr-3">Name</th>
-                <th className="py-2 pr-3">Email</th>
-                <th className="py-2 pr-3">Department</th>
-                <th className="py-2 pr-3">Role</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((user) => (
-                <tr key={user.id} className="border-b last:border-b-0">
-                  <td className="py-2 pr-3">{user.name}</td>
-                  <td className="py-2 pr-3">{user.email}</td>
-                  <td className="py-2 pr-3">{user.department || "N/A"}</td>
-                  <td className="py-2 pr-3">
-                    <select
-                      className="border rounded p-1"
-                      value={user.role}
-                      onChange={(e) => changeRole(user.id, e.target.value)}
-                    >
-                      {roles.map((role) => (
-                        <option key={role.key} value={role.key}>
-                          {role.name}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section>
-        <h3 className="text-lg font-semibold mb-3">All Document Requests</h3>
-        <div className="space-y-4">
-          {requests.map((request) => {
-            const terminal = isTerminalStatus(request.status);
-
-            return (
+          <div className="space-y-3">
+            {roles.map((role) => (
               <div
-                key={request._id}
-                className="bg-white p-4 rounded shadow border"
+                key={role.id}
+                className="rounded-3xl border border-orange-100 bg-orange-50 p-4 lg:flex lg:items-center lg:gap-4"
               >
-                <p className="font-semibold">
-                  {request.documentType} - {request.student?.name}
-                </p>
-                <p className="text-sm text-gray-600">
-                  Assigned Role: {request.assignedToRole}
-                </p>
-                <p className="text-sm text-gray-600">
-                  Department: {request.student?.department || "N/A"}
-                </p>
-                <p className="text-sm text-gray-600">
-                  Details: {request.details}
-                </p>
-                <p className="text-sm text-gray-600 mb-2">
-                  Status:{" "}
-                  <span
-                    className={`ml-1 px-2 py-1 rounded text-xs font-semibold ${terminal ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}
-                  >
-                    {request.status}
-                  </span>
-                </p>
-                <textarea
-                  className="border rounded p-2 w-full mb-2"
-                  rows="2"
-                  placeholder="Add comments"
-                  value={comments[request._id] || ""}
-                  onChange={(e) =>
-                    setComments({ ...comments, [request._id]: e.target.value })
-                  }
-                />
-                {terminal ? (
-                  <p className="text-sm text-gray-500">
-                    This request has already reached a final status.
+                <div className="flex-1">
+                  <p className="font-semibold text-gray-900">{role.name}</p>
+                  <p className="mt-1 text-xs text-gray-600">
+                    Key: {role.key}
+                    {role.isSystem ? " · protected system role" : ""}
                   </p>
-                ) : (
-                  <div className="space-x-2">
-                    <button
-                      className="bg-brandOrange text-white px-3 py-1 rounded"
-                      onClick={() => updateStatus(request._id, "Approved")}
-                    >
-                      Approve
-                    </button>
-                    <button
-                      className="bg-gray-700 text-white px-3 py-1 rounded"
-                      onClick={() => updateStatus(request._id, "Rejected")}
-                    >
-                      Reject
-                    </button>
-                  </div>
-                )}
+                </div>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <input
+                    className="rounded-3xl border border-orange-200 bg-white px-4 py-3 text-sm text-gray-900"
+                    disabled={role.isSystem}
+                    value={renameValues[role.id] ?? role.name}
+                    onChange={(e) =>
+                      setRenameValues({
+                        ...renameValues,
+                        [role.id]: e.target.value,
+                      })
+                    }
+                  />
+                  <button
+                    className="rounded-3xl bg-gray-700 px-4 py-3 text-sm font-semibold text-white disabled:opacity-50"
+                    disabled={role.isSystem}
+                    onClick={() => renameRole(role)}
+                  >
+                    Rename
+                  </button>
+                  <button
+                    className="rounded-3xl bg-red-600 px-4 py-3 text-sm font-semibold text-white disabled:opacity-50"
+                    disabled={role.isSystem}
+                    onClick={() => deleteRole(role)}
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
-            );
-          })}
-          {!requests.length && (
-            <p className="text-gray-500">No document requests found.</p>
-          )}
-        </div>
-      </section>
+            ))}
+          </div>
+        </section>
+
+        <section className="rounded-[2rem] border border-orange-100 bg-white p-6 shadow-soft">
+          <div className="mb-5 flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900">
+                Manage users
+              </h2>
+              <p className="text-sm text-gray-500">
+                Review user accounts and update roles.
+              </p>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[720px] text-sm">
+              <thead>
+                <tr className="text-left border-b border-orange-100 text-gray-700">
+                  <th className="py-3 pr-3">Name</th>
+                  <th className="py-3 pr-3">Email</th>
+                  <th className="py-3 pr-3">Department</th>
+                  <th className="py-3 pr-3">Role</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-orange-100">
+                {users.map((user) => (
+                  <tr key={user.id}>
+                    <td className="py-3 pr-3">{user.name}</td>
+                    <td className="py-3 pr-3">{user.email}</td>
+                    <td className="py-3 pr-3">{user.department || "N/A"}</td>
+                    <td className="py-3 pr-3">
+                      <select
+                        className="rounded-3xl border border-orange-200 bg-orange-50 px-3 py-2 text-sm text-gray-900"
+                        value={user.role}
+                        onChange={(e) => changeRole(user.id, e.target.value)}
+                      >
+                        {roles.map((role) => (
+                          <option key={role.key} value={role.key}>
+                            {role.name}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section className="rounded-[2rem] border border-orange-100 bg-white p-6 shadow-soft">
+          <div className="mb-5 flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900">
+                All document requests
+              </h2>
+              <p className="text-sm text-gray-500">
+                Monitor the current workflow and approval status.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            {requests.map((request) => {
+              const terminal = isTerminalStatus(request.status);
+
+              return (
+                <div
+                  key={request._id}
+                  className="rounded-3xl border border-orange-100 bg-orange-50 p-5"
+                >
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                    <div>
+                      <p className="text-lg font-semibold text-gray-900">
+                        {request.documentType}
+                      </p>
+                      <p className="mt-1 text-sm text-gray-600">
+                        {request.student?.name} ·{" "}
+                        {request.student?.department || "N/A"}
+                      </p>
+                    </div>
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-semibold ${terminal ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}
+                    >
+                      {request.status}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    <p className="text-sm text-gray-600">
+                      Assigned Role: {request.assignedToRole}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      Requested on:{" "}
+                      {new Date(request.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+
+                  <p className="mt-4 text-sm text-gray-600">
+                    Details: {request.details}
+                  </p>
+                  <textarea
+                    className="mt-4 w-full rounded-3xl border border-orange-200 bg-white px-4 py-3 text-sm text-gray-900"
+                    rows="2"
+                    placeholder="Add comments"
+                    value={comments[request._id] || ""}
+                    onChange={(e) =>
+                      setComments({
+                        ...comments,
+                        [request._id]: e.target.value,
+                      })
+                    }
+                  />
+
+                  {terminal ? (
+                    <p className="mt-3 text-sm text-gray-500">
+                      This request has already reached a final status.
+                    </p>
+                  ) : (
+                    <div className="mt-4 flex flex-wrap gap-3">
+                      <button
+                        className="rounded-3xl bg-orange-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-orange-700"
+                        onClick={() => updateStatus(request._id, "Approved")}
+                      >
+                        Approve
+                      </button>
+                      <button
+                        className="rounded-3xl bg-gray-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
+                        onClick={() => updateStatus(request._id, "Rejected")}
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            {!requests.length && (
+              <p className="text-gray-500">No document requests found.</p>
+            )}
+          </div>
+        </section>
+      </div>
     </Layout>
   );
 };

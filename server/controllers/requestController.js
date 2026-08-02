@@ -87,16 +87,49 @@ const updateRequestStatus = async (req, res) => {
       return res.status(404).json({ message: "Request not found" });
     }
 
-    // only the currently assigned authority (or admin when assignedToRole === 'admin') can act
-    if (req.user.role !== "admin" && request.assignedToRole !== req.user.role) {
+    const userRole = String(req.user.role || "").toLowerCase();
+
+    if (!Array.isArray(request.workflow) || request.workflow.length === 0) {
+      const workflowRoles = getWorkflow(request.documentType);
+      if (!workflowRoles || !workflowRoles.length) {
+        return res
+          .status(400)
+          .json({ message: "Request workflow is unavailable" });
+      }
+
+      request.workflow = workflowRoles.map((role) => ({
+        role,
+        status: "Pending",
+      }));
+    }
+
+    const pendingStage = request.workflow.find(
+      (s) => String(s.status).toLowerCase() === "pending",
+    );
+    const assignedRole = String(
+      request.assignedToRole || pendingStage?.role || "",
+    ).toLowerCase();
+
+    if (!assignedRole) {
+      return res
+        .status(403)
+        .json({ message: "No active assignment for this request" });
+    }
+
+    if (userRole !== assignedRole) {
       return res
         .status(403)
         .json({ message: "Not authorized to review this request" });
     }
 
-    // find current workflow stage
+    if (pendingStage && !request.assignedToRole) {
+      request.assignedToRole = pendingStage.role;
+    }
+
     const currentIndex = request.workflow.findIndex(
-      (s) => s.role === request.assignedToRole && s.status === "Pending",
+      (s) =>
+        String(s.role).toLowerCase() === assignedRole &&
+        String(s.status).toLowerCase() === "pending",
     );
     if (currentIndex === -1) {
       return res
